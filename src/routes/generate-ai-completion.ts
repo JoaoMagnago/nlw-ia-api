@@ -1,3 +1,4 @@
+import { OpenAIStream, streamToResponse } from 'ai';
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { openai } from '../lib/openai';
@@ -33,8 +34,17 @@ export async function generateAiCompletionRoute(app: FastifyInstance) {
       model: 'gpt-3.5-turbo',
       temperature,
       messages: [{ role: 'user', content: promptMessage }],
+      stream: true,
     });
 
-    return response;
+    const stream = OpenAIStream(response);
+
+    // Como é uma resposta nativa do node, a configuração deve ser passada manualmente para os headers
+    streamToResponse(stream, reply.raw, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      },
+    });
   });
 }
